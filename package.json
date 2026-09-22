@@ -1,1 +1,0 @@
-{"name":"internet-objects","version":"0.13.0","private":true,"type":"module","scripts":{"start":"node server.js"},"dependencies":{"@neondatabase/serverless":"^1.0.2"},"engines":{"node":">=20"}}
