@@ -4,9 +4,7 @@
     "api/index.js": {
       "runtime": "nodejs22.x",
       "maxDuration": 60,
-      "includeFiles": [
-        "public/*.html"
-      ]
+      "includeFiles": "public/*.html"
     }
   },
   "rewrites": [
