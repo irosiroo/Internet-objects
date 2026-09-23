@@ -4,13 +4,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createJsonRepository, createPostgresRepository } from './repository.js';
 
-const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), 'data');
+const DATABASE_URL=process.env.DATABASE_URL||'';
+const DATA_DIR = process.env.DATA_DIR || (process.env.VERCEL === '1' ? '/tmp/internet-objects-data' : path.join(process.cwd(), 'data'));
 const initial={objects:{},graphs:{},events:[],invites:{},receipts:{},deliveries:{},outbox:{},peers:{},federationEvents:{}};
+// Vercel's /var/task filesystem is read-only; /tmp is the only writable fallback.
 fs.mkdirSync(DATA_DIR,{recursive:true});
 const RATE_WINDOW=Number(process.env.RATE_WINDOW_MS||60000);
 const RATE_LIMIT=Number(process.env.RATE_LIMIT||120);
 const VERSION='0.14';
-const DATABASE_URL=process.env.DATABASE_URL||'';
 let repo = DATABASE_URL ? await createPostgresRepository({databaseUrl:DATABASE_URL,dataDir:DATA_DIR,initial}) : createJsonRepository({dataDir:DATA_DIR,initial});
 await repo.init();
 const state = repo.kind==='postgres' ? await repo.load() : repo.state;
