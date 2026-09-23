@@ -1,14 +1,14 @@
 {
   "version": 2,
   "functions": {
-    "api/index.js": {
+    "api/**/*.js": {
       "maxDuration": 60,
       "includeFiles": "public/*.html"
     }
   },
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/((?!api(?:/|$)).*)",
       "destination": "/api/index"
     }
   ]
