@@ -1,0 +1,27 @@
+Internet Objects 0.14.2 — final upgrade package
+
+Base expected:
+- repository: irosiroo/Internet-objects
+- branch: main
+- base commit: f6412f35318afb7161a126eb9e5fd6e820fc515e
+- package version: 0.14.1
+
+What the script does:
+1. Creates a full local backup before changing anything.
+2. Refuses to patch an unexpected repository/version.
+3. Changes package.json to 0.14.2.
+4. Makes PUBLIC_BASE_URL normalization safe.
+5. Makes capability validation constant-time and max-use aware.
+6. Adds durable PostgreSQL invite consumption with SELECT ... FOR UPDATE.
+7. Makes PostgreSQL graph activation transactional.
+8. Routes /r/<capability> through the durable consume path when PostgreSQL is active.
+9. Keeps the existing AI compiler and architecture unchanged.
+10. Runs node --check and git diff --check.
+11. Starts the real server in JSON mode and runs an end-to-end:
+   compile -> activate -> invite redirect -> resolve x3 -> complete -> stats.
+
+Important:
+- The local E2E validates the full HTTP lifecycle.
+- It does NOT claim a live Neon/PostgreSQL test because no DATABASE_URL is supplied.
+- PostgreSQL SQL paths are syntax-checked through the complete repository source after patching, but a live database transaction test must be performed against the actual Neon project after upload.
+- The script does not delete project files.
