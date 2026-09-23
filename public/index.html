@@ -1,1 +1,96 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Internet Objects 0.4</title><style>body{font-family:system-ui;background:#07080a;color:#eee;max-width:980px;margin:50px auto;padding:20px}textarea,button{font:inherit;padding:14px;border-radius:12px;border:1px solid #30333a;background:#111318;color:#eee}textarea{width:100%;height:150px;box-sizing:border-box}button{cursor:pointer;background:#fff;color:#000;margin-top:12px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.card{border:1px solid #292c33;border-radius:18px;padding:22px;margin-top:18px}.muted{color:#9297a2}a{color:#a9c7ff}pre{white-space:pre-wrap}@media(max-width:700px){.grid{grid-template-columns:1fr}}</style></head><body><h1>Internet Objects <span class="muted">0.4</span></h1><p class="muted">Compile intent → activate state → route actors → propagate the next state.</p><div class="card"><textarea id="p" placeholder="I need 4 people to review this sequentially, then the last person decides."></textarea><button onclick="compile()">Compile & Activate</button><pre id="out"></pre></div><div class="grid"><div class="card"><b id="objects">—</b><div class="muted">objects</div></div><div class="card"><b id="visits">—</b><div class="muted">external visits</div></div><div class="card"><b id="conversion">—</b><div class="muted">resolve / visit</div></div></div><p><a href="/dashboard">Open runtime dashboard →</a></p><script>async function stats(){const x=await fetch('/api/stats').then(r=>r.json());objects.textContent=x.objects;visits.textContent=x.visits;conversion.textContent=(x.conversion*100).toFixed(1)+'%'}async function compile(){const prompt=p.value.trim();if(!prompt)return;const r=await fetch('/api/compile',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({prompt})});const x=await r.json();if(!x.graphId){out.textContent=JSON.stringify(x,null,2);return}const a=await fetch('/api/graphs/'+x.graphId+'/activate',{method:'POST'}).then(r=>r.json());out.textContent=JSON.stringify({...x,activation:a},null,2);stats()}stats();</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07080a">
+<title>Internet Objects 0.14</title>
+<meta name="description" content="Compile a human process into a stateful Internet Object and propagate it across actors.">
+<style>
+:root{color-scheme:dark;--bg:#07080a;--panel:#0d0f13;--line:#252a33;--text:#f4f5f7;--muted:#9299a5;--ok:#70e1a0}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 70% -10%,#171a22 0,#07080a 38%);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{width:min(1120px,calc(100% - 32px));margin:auto;padding:54px 0 70px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:44px}
+.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#aab0ba}
+h1{font-size:clamp(42px,7vw,82px);line-height:.94;letter-spacing:-.055em;margin:12px 0 20px;font-weight:650}h1 span{color:#6f7480}
+.lead{max-width:720px;color:var(--muted);font-size:clamp(17px,2.2vw,21px);line-height:1.55;margin:0}
+nav{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}nav a{color:#cbd0d8;text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:9px 13px;font-size:13px}
+.panel{border:1px solid var(--line);background:rgba(13,15,19,.78);border-radius:24px;padding:24px}
+label{display:block;font-size:13px;color:#aeb4bf;margin-bottom:10px}
+textarea{display:block;width:100%;min-height:160px;resize:vertical;border:1px solid #303640;background:#090b0e;color:var(--text);border-radius:17px;padding:18px;font:inherit;font-size:17px;line-height:1.5;outline:none}
+textarea:focus{border-color:#68707c}
+.actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:14px}
+button{border:0;border-radius:999px;background:#f5f5f5;color:#07080a;padding:13px 20px;font:600 15px inherit;cursor:pointer}button:disabled{opacity:.55;cursor:wait}
+.status{font-size:13px;color:var(--muted)}.status.ok{color:var(--ok)}.status.err{color:#ff8585}
+.result{display:none;margin-top:18px;border-top:1px solid var(--line);padding-top:18px}.result.show{display:block}
+.result-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.mini{border:1px solid var(--line);border-radius:15px;padding:14px;background:#090b0e}.mini strong{display:block;font-size:20px;margin-bottom:4px}.mini small{color:var(--muted)}
+.linkbox{margin-top:14px;border:1px solid #313741;border-radius:15px;padding:13px;background:#090b0e;overflow:auto}.linkbox a{color:#dce2ea;word-break:break-all}
+pre{white-space:pre-wrap;word-break:break-word;color:#9ea6b2;font-size:12px;line-height:1.5}
+.section-title{display:flex;justify-content:space-between;align-items:end;gap:15px;margin:42px 0 15px}h2{margin:0;font-size:20px}.section-title p{margin:0;color:var(--muted);font-size:13px}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.metric{border:1px solid var(--line);border-radius:18px;padding:18px;background:rgba(13,15,19,.58)}.metric .n{font-size:30px;letter-spacing:-.04em}.metric .l{color:var(--muted);font-size:13px;margin-top:5px}
+.flow{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}.step{border:1px solid var(--line);border-radius:15px;padding:14px;background:#0b0d10}.step b{font-size:13px}.step div{color:var(--muted);font-size:12px;margin-top:5px;line-height:1.35}
+footer{margin-top:44px;color:#666d78;font-size:12px}
+@media(max-width:850px){header{flex-direction:column}nav{justify-content:flex-start}.metrics{grid-template-columns:repeat(2,1fr)}.flow{grid-template-columns:repeat(3,1fr)}.result-grid{grid-template-columns:1fr}}
+@media(max-width:520px){main{width:min(100% - 20px,1120px);padding-top:30px}.panel{padding:16px;border-radius:19px}.textarea{min-height:190px}.metrics{gap:8px}.metric{padding:14px}.flow{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<div>
+<div class="eyebrow">Stateful Internet Protocol · v0.14</div>
+<h1>Internet Objects <span>0.14</span></h1>
+<p class="lead">Compile a human process into a stateful Internet Object, route each actor through a capability URL, and propagate the next state as the process resolves.</p>
+</div>
+<nav><a href="/protocol">Protocol</a><a href="/dashboard">Runtime</a><a href="/api/health">Health</a></nav>
+</header>
+
+<section class="panel">
+<label for="prompt">Describe the process</label>
+<textarea id="prompt" placeholder="I need 4 people to review this sequentially, then the last person decides."></textarea>
+<div class="actions"><button id="run" onclick="compile()">Compile &amp; Activate</button><span id="status" class="status">Ready</span></div>
+<div id="result" class="result">
+<div class="result-grid">
+<div class="mini"><strong id="compiler">—</strong><small>compiler</small></div>
+<div class="mini"><strong id="actors">—</strong><small>actors</small></div>
+<div class="mini"><strong id="state">—</strong><small>initial state</small></div>
+</div>
+<div class="linkbox">Entry URL: <a id="entry" target="_blank" rel="noopener"></a></div>
+<pre id="details"></pre>
+</div>
+</section>
+
+<div class="section-title"><h2>Runtime</h2><p>Live protocol counters</p></div>
+<section class="metrics">
+<div class="metric"><div class="n" id="objects">—</div><div class="l">objects</div></div>
+<div class="metric"><div class="n" id="graphs">—</div><div class="l">graphs</div></div>
+<div class="metric"><div class="n" id="visits">—</div><div class="l">external visits</div></div>
+<div class="metric"><div class="n" id="resolutions">—</div><div class="l">resolutions</div></div>
+<div class="metric"><div class="n" id="propagations">—</div><div class="l">propagations</div></div>
+<div class="metric"><div class="n" id="actorsMetric">—</div><div class="l">unique actors</div></div>
+<div class="metric"><div class="n" id="completed">—</div><div class="l">completed graphs</div></div>
+<div class="metric"><div class="n" id="conversion">—</div><div class="l">resolve / visit</div></div>
+</section>
+
+<div class="section-title"><h2>Object lifecycle</h2><p>One state creates the next actor's state</p></div>
+<section class="flow">
+<div class="step"><b>01 · Compile</b><div>Intent becomes a graph.</div></div>
+<div class="step"><b>02 · Activate</b><div>First state receives an entry capability.</div></div>
+<div class="step"><b>03 · Visit</b><div>An actor opens the external URL.</div></div>
+<div class="step"><b>04 · Resolve</b><div>The actor records an action.</div></div>
+<div class="step"><b>05 · Propagate</b><div>The next state and invite are created.</div></div>
+<div class="step"><b>06 · Complete</b><div>Terminal state produces a receipt.</div></div>
+</section>
+
+<footer>Internet Objects · experimental protocol implementation · PostgreSQL/Neon supported for durable runtime state.</footer>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const api=async(path,options={})=>{const r=await fetch(path,options);const data=await r.json().catch(()=>({error:r.statusText}));if(!r.ok)throw new Error(data.error||("HTTP "+r.status));return data};
+async function stats(){try{const x=await api("/api/stats");$("objects").textContent=x.objects??"—";$("graphs").textContent=x.graphs??"—";$("visits").textContent=x.visits??"—";$("resolutions").textContent=x.resolutions??"—";$("propagations").textContent=x.propagations??"—";$("actorsMetric").textContent=x.uniqueActors??"—";$("completed").textContent=x.completedGraphs??"—";$("conversion").textContent=((x.conversion||0)*100).toFixed(1)+"%"}catch(e){}}
+async function compile(){const prompt=$("prompt").value.trim();if(!prompt){$("status").textContent="Describe a process first.";$("status").className="status err";return}const button=$("run");button.disabled=true;$("status").textContent="Compiling and activating…";$("status").className="status";try{const x=await api("/api/compile",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({prompt})});const a=await api("/api/graphs/"+encodeURIComponent(x.graphId)+"/activate",{method:"POST"});const publicUrl=a.publicUrl||a.object?.inviteUrl||("/o/"+a.object?.id);$("compiler").textContent=x.compiler||"deterministic";$("actors").textContent=x.graph?.actors?.length??"—";$("state").textContent=a.object?.state||"pending";$("entry").textContent=new URL(publicUrl,location.origin).href;$("entry").href=publicUrl;$("details").textContent=JSON.stringify({graph:x.graph,activation:a},null,2);$("result").classList.add("show");$("status").textContent="Active · entry URL generated";$("status").className="status ok";stats()}catch(e){$("status").textContent=e.message;$("status").className="status err"}finally{button.disabled=false}}
+$("prompt").addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key==="Enter")compile()});stats();setInterval(stats,5000);
+</script>
+</body>
+</html>
